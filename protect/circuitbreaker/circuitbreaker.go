@@ -86,6 +86,11 @@ func (b *Breaker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		// Cooldown elapsed: promote to Half-Open and let this request probe.
 		b.state = stateHalfOpen
+	case stateHalfOpen:
+		// Another goroutine already holds the single Half-Open probe slot.
+		b.mu.Unlock()
+		http.Error(w, "circuit open", http.StatusServiceUnavailable)
+		return
 	}
 	b.mu.Unlock()
 

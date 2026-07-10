@@ -54,22 +54,27 @@ func New(dep *faildep.Dependency, maxAttempts int, baseDelay time.Duration) *Han
 // blindly retry non-idempotent writes.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if h.maxAttempts <= 0 {
+		http.Error(w, "retry misconfigured: maxAttempts must be positive", http.StatusBadGateway)
+		return
+	}
+
 	var lastErr error
 
 	for attempt := 0; attempt < h.maxAttempts; attempt++ {
-		if err := h.dep.Call(ctx); err == nil {
+		err := h.dep.Call(ctx)
+		if err == nil {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 			return
-		} else {
-			lastErr = err
 		}
+		lastErr = err
 
 		if attempt < h.maxAttempts-1 {
-			// Full jitter backoff: cap = baseDelay * 2^attempt, sleep in [0, cap).
+			// Full jitter backoff: window = baseDelay * 2^attempt, sleep in [0, window).
 			// Spreads synchronized retriers to avoid thundering herd.
-			cap := h.baseDelay << uint(attempt)
-			sleep := time.Duration(rand.Int63n(int64(cap) + 1))
+			window := h.baseDelay << uint(attempt)
+			sleep := time.Duration(rand.Int63n(int64(window) + 1))
 			select {
 			case <-time.After(sleep):
 			case <-ctx.Done():

@@ -18,7 +18,6 @@ var ErrFailed = errors.New("faildep: dependency call failed")
 type Dependency struct {
 	FailRate float64       // probability of failure [0.0, 1.0]
 	Latency  time.Duration // simulated response time
-	rng      *rand.Rand
 }
 
 // New creates a Dependency with the given failure rate and latency.
@@ -26,7 +25,6 @@ func New(failRate float64, latency time.Duration) *Dependency {
 	return &Dependency{
 		FailRate: failRate,
 		Latency:  latency,
-		rng:      rand.New(rand.NewSource(42)),
 	}
 }
 
@@ -39,7 +37,7 @@ func (d *Dependency) Call(ctx context.Context) error {
 		return ctx.Err()
 	case <-time.After(d.Latency):
 	}
-	if d.rng.Float64() < d.FailRate {
+	if rand.Float64() < d.FailRate {
 		return ErrFailed
 	}
 	return nil
