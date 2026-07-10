@@ -2,7 +2,7 @@
 
 > Don't let overload or slowness in one part of the system bring everything else down.
 
-Eight self-contained Go packages, each demonstrating one resilience pattern. No frameworks, no external dependencies — stdlib only. Read the code, run the tests, understand the tradeoffs.
+Eight self-contained Go packages, each demonstrating one resilience pattern. No frameworks, no external dependencies — stdlib only. Read the code, understand the tradeoffs.
 
 ---
 
